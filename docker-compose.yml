@@ -1,0 +1,18 @@
+version: '3.7'
+services:
+  api:
+    image: 'app:latest'
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '8000:8000'
+    command: node api/index.js
+
+  conversion:
+    image: 'app:latest'
+    command: node conversion/index.js
+
+  mailer:
+    image: 'app:latest'
+    command: node mailer/index.js

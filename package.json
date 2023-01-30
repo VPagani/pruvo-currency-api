@@ -1,0 +1,64 @@
+{
+  "name": "pruvo-currency-api",
+  "version": "1.0.0",
+  "description": "Currency conversion service",
+  "keywords": [
+    "api",
+    "currency",
+    "typescript"
+  ],
+  "author": "VPagani <xvpagani@gmail.com>",
+  "license": "ISC",
+  "engineStrict": true,
+  "engines": {
+    "node": "^16 || ^18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vpagani/pruvo-currency-api.git"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*.d.ts",
+    "dist/**/*.js"
+  ],
+  "scripts": {
+    "clean:dist": "rm -rf dist && rm -f .buildcache",
+    "prebuild": "yarn run lint && yarn run clean:dist",
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint . --ext .ts",
+    "postlint": "yarn run format:check",
+    "lint:fix": "eslint . --fix --ext .ts",
+    "format:fix": "prettier --write \"./**/*.{ts,js,json,md}\"",
+    "format:check": "prettier --list-different \"./**/*.{ts,js,json,md}\"",
+    "start": "node dist/index.js"
+  },
+  "devDependencies": {
+    "@types/node": "^16.11.62",
+    "@typescript-eslint/eslint-plugin": "^5.38.1",
+    "@typescript-eslint/parser": "^5.38.1",
+    "eslint": "^8.24.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-jest": "^27.0.4",
+    "eslint-plugin-prefer-arrow": "^1.2.3",
+    "eslint-plugin-prettier": "^4.2.1",
+    "jest": "^29.1.1",
+    "prettier": "^2.7.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.8.4"
+  },
+  "dependencies": {
+    "axios": "^1.2.6",
+    "fastify": "^4.12.0",
+    "node-graceful-shutdown": "^1.1.5",
+    "squiss-ts": "^4.4.1",
+    "znv": "^0.3.2",
+    "zod": "^3.20.2"
+  }
+}
