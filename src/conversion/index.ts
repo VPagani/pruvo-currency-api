@@ -1,10 +1,10 @@
 import { onShutdown } from 'node-graceful-shutdown';
 
-import queueCurrencyConversion from './queue';
+import { start, stop } from './app';
 
-queueCurrencyConversion.start();
+start();
 
 onShutdown(async () => {
-  await queueCurrencyConversion.stop();
+  await stop();
   process.exit(0);
 });

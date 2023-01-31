@@ -7,7 +7,7 @@ const env = parseEnv(process.env, {
 
   MAIL_SENDER: z.string().default(`no-reply@home.local`),
 
-  OER_API_KEY: z.string(),
+  OXR_APP_ID: z.string(),
 
   AWS_ACCESS_KEY_ID: z.string().default(`dummy`),
   AWS_SECRET_ACCESS_KEY: z.string().default(`dummy`),

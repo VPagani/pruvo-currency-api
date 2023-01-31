@@ -14,14 +14,24 @@ const CurrencyConversionRates = z.object({
 
 type CurrencyConversionRates = z.infer<typeof CurrencyConversionRates>;
 
+/**
+ * Cache of currency conversion rates.
+ */
 const currencyConversionCache: Record<string, CurrencyConversionRates> = {};
 
-const getCurrencyConversionRateFromCache = (from: string, to: string): number | void => {
+/**
+ * Get the currency conversion rate from the cache.
+ */
+const getCurrencyConversionRateFromCache = (from: string, to: string): number | null => {
   const cacheFrom = currencyConversionCache[from];
   if (cacheFrom) {
     const now = Date.now();
     if (now - cacheFrom.timestamp > CACHE_TIMEOUT) {
-      return;
+      return null;
+    }
+
+    if (!(to in cacheFrom.rates)) {
+      return null;
     }
 
     return cacheFrom.rates[to];
@@ -31,50 +41,121 @@ const getCurrencyConversionRateFromCache = (from: string, to: string): number | 
   if (cacheTo) {
     const now = Date.now();
     if (now - cacheTo.timestamp > CACHE_TIMEOUT) {
-      return;
+      return null;
+    }
+
+    if (!(from in cacheTo.rates)) {
+      return null;
     }
 
     return 1 / cacheTo.rates[from];
   }
+
+  return null;
 };
 
-const getCurrencyConversionRates = async (from: string): Promise<CurrencyConversionRates> => {
-  const response = await axios.get(`https://api.exchangeratesapi.io/latest`, {
-    params: {
-      [`app_id`]: env.OER_API_KEY,
-      [`base`]: from,
-      [`prettyprint`]: false,
-      [`show_alternative`]: false,
-    },
-  });
-  const currencyRates = CurrencyConversionRates.parse(response.data);
+/**
+ * Fetches the latest currency conversion rates from Open Exchange Rates
+ * and simulate a long running task (for the sake of the assignment).
+ */
+const getCurrencyConversionRates = async (from: string): Promise<CurrencyConversionRates | null> => {
+  try {
+    const response = await axios.get(`https://openexchangerates.org/api/latest.json`, {
+      params: {
+        [`app_id`]: env.OXR_APP_ID,
+        [`base`]: from,
+        [`prettyprint`]: false,
+        [`show_alternative`]: false,
+      },
+    });
 
-  return currencyRates;
+    const result = CurrencyConversionRates.safeParse(response.data);
+    if (!result.success) {
+      console.error(`Invalid response from Open Exchange Rates`);
+      console.error(`Response:`, response.data);
+      console.error(`Issues:`, result.error.issues);
+      return null;
+    }
+
+    result.data.timestamp *= 1000;
+
+    // Simluate a long running task
+    await new Promise((resolve) => setTimeout(resolve, 1000 * 10));
+
+    return result.data;
+  } catch (e) {
+    if (axios.isAxiosError(e)) {
+      console.error(`Error fetching currency conversion rates from Open Exchange Rates:`, e.response?.data);
+    }
+
+    return null;
+  }
 };
 
-const getCurrencyConversion = async (amount: number, from: string, to: string): Promise<number> => {
+/**
+ * Converts an amount from one currency to another.
+ *
+ * If the conversion rate is not cached, it will be fetched from Open Exchange Rates
+ * and cached for future use (for 1 hour).
+ */
+const getCurrencyConversion = async (amount: number, from: string, to: string): Promise<number | null> => {
   const cachedRate = getCurrencyConversionRateFromCache(from, to);
-  if (cachedRate) {
-    return amount * cachedRate;
+  if (cachedRate != null) {
+    const convertedAmountCached = amount * cachedRate;
+    console.log(`Converted ${amount} ${from} to ${convertedAmountCached} ${to} (cached rate ${cachedRate})`);
+    return convertedAmountCached;
   }
 
   const currencyRates = await getCurrencyConversionRates(from);
-  currencyConversionCache[from] = currencyRates;
+  if (currencyRates == null) {
+    return null;
+  }
 
-  return amount * currencyRates.rates[to];
+  currencyConversionCache[from] = currencyRates;
+  if (!(to in currencyRates.rates)) {
+    console.error(`Currency "${to}" not found in rates`);
+    return null;
+  }
+
+  const convertedAmount = amount * currencyRates.rates[to];
+
+  console.log(`Converted ${amount} ${from} to ${convertedAmount} ${to} (fetched rate ${convertedAmount})`);
+
+  return convertedAmount;
 };
 
-queueCurrencyConversion.onMessage(async (message) => {
-  const { amount, baseCurrency, targetCurrency, email } = message;
+/**
+ * Process messages from the queue to convert currencies
+ */
+queueCurrencyConversion.onMessage(async (data) => {
+  const { amount, baseCurrency, targetCurrency, email } = data;
 
   const convertedAmount = await getCurrencyConversion(amount, baseCurrency, targetCurrency);
 
-  console.log(`Converted ${amount} ${baseCurrency} to ${convertedAmount} ${targetCurrency}`);
+  // If the conversion failed, send an email to the user
+  if (convertedAmount == null) {
+    await queueSendMail.sendMessage({
+      from: env.MAIL_SENDER,
+      to: email,
+      subject: `Currency Conversion`,
+      text: `Failed to convert ${amount} ${baseCurrency} to ${targetCurrency}`,
+    });
+    return;
+  }
 
-  queueSendMail.sendMessage({
+  // Otherwise, send an email to the user with the conversion result
+  await queueSendMail.sendMessage({
     from: env.MAIL_SENDER,
     to: email,
     subject: `Currency Conversion`,
     text: `Converted ${amount} ${baseCurrency} to ${convertedAmount} ${targetCurrency}`,
   });
 });
+
+export const start = async (): Promise<void> => {
+  await queueCurrencyConversion.start();
+};
+
+export const stop = async (): Promise<void> => {
+  await queueCurrencyConversion.stop();
+};
