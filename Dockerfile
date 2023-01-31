@@ -10,7 +10,9 @@ COPY yarn.lock /usr/local/bin/service/
 WORKDIR /usr/local/bin/service/
 RUN yarn install --frozen-lockfile --production
 
-COPY dist /usr/local/bin/service/dist/
-EXPOSE 8000
+COPY tsconfig.json /usr/local/bin/service/
+COPY src /usr/local/bin/service/src/
+RUN yarn build && rm -rf src tsconfig.json
 
+EXPOSE 8000
 WORKDIR /usr/local/bin/service/dist

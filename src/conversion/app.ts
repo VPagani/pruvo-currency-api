@@ -55,8 +55,7 @@ const getCurrencyConversionRateFromCache = (from: string, to: string): number | 
 };
 
 /**
- * Fetches the latest currency conversion rates from Open Exchange Rates
- * and simulate a long running task (for the sake of the assignment).
+ * Fetches the latest currency conversion rates from Open Exchange Rates.
  */
 const getCurrencyConversionRates = async (from: string): Promise<CurrencyConversionRates | null> => {
   try {
@@ -78,9 +77,6 @@ const getCurrencyConversionRates = async (from: string): Promise<CurrencyConvers
     }
 
     result.data.timestamp *= 1000;
-
-    // Simluate a long running task
-    await new Promise((resolve) => setTimeout(resolve, 1000 * 10));
 
     return result.data;
   } catch (e) {
@@ -117,9 +113,10 @@ const getCurrencyConversion = async (amount: number, from: string, to: string): 
     return null;
   }
 
-  const convertedAmount = amount * currencyRates.rates[to];
+  const rate = currencyRates.rates[to];
+  const convertedAmount = amount * rate;
 
-  console.log(`Converted ${amount} ${from} to ${convertedAmount} ${to} (fetched rate ${convertedAmount})`);
+  console.log(`Converted ${amount} ${from} to ${convertedAmount} ${to} (fetched rate ${rate})`);
 
   return convertedAmount;
 };

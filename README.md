@@ -10,11 +10,9 @@ Requirements:
 - Docker Compose v2
 - [Open Exchange Rates](https://openexchangerates.org) app id
 
-Create a `.env` file, paste contents from `.env.example` and add your OpenExchangeRate app id to `OXR_APP_ID` variable, then just run:
+Create a `.env` file, paste contents from `.env.example` and fill the `OXR_APP_ID` variable with your App id from Open Exchange Rates, then just run:
 
 ```bash
-yarn install
-yarn build
 docker compose up --build
 ```
 
