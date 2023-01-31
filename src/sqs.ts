@@ -1,4 +1,4 @@
-import { Squiss, Message } from 'squiss-ts';
+import { Squiss, Message, IMessageToSend } from 'squiss-ts';
 import { ZodSchema } from 'zod';
 import env from './env';
 
@@ -20,13 +20,14 @@ export const createQueue = <QueueMessage>(
       region: env.AWS_REGION,
       endpoint: env.AWS_ENDPOINT,
     },
-    queueName: `pruvo-currency-api:${name}`,
+    queueName: `pruvo-currency-${name}`,
     bodyFormat: `json`,
     maxInFlight: 15,
   });
 
   return {
     start: async (): Promise<void> => {
+      await squiss.createQueue();
       await squiss.start();
     },
 
@@ -35,14 +36,25 @@ export const createQueue = <QueueMessage>(
     },
 
     sendMessage: async (message: QueueMessage): Promise<void> => {
-      await squiss.sendMessage({
-        body: messageSchema.parse(message),
-      });
+      const result = messageSchema.safeParse(message);
+      if (!result.success) {
+        console.error(`Invalid message sent to queue "${name}":`, result.error.issues);
+        return;
+      }
+
+      await squiss.sendMessage(result.data as IMessageToSend);
     },
 
-    onMessage: (handler: (message: QueueMessage) => Promise<void>): void => {
+    onMessage: (handler: (data: QueueMessage) => Promise<void>): void => {
       squiss.on(`message`, async (message: Message) => {
-        await handler(messageSchema.parse(message.body));
+        const result = messageSchema.safeParse(message.body);
+        if (!result.success) {
+          console.error(`Invalid message received in queue "${name}":`, result.error.issues);
+          await message.del();
+          return;
+        }
+
+        await handler(result.data);
         await message.del();
       });
     },
