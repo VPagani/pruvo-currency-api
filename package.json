@@ -29,7 +29,7 @@
     "dist/**/*.js"
   ],
   "scripts": {
-    "clean:dist": "rm -rf dist && rm -f .buildcache",
+    "clean:dist": "del-cli dist && del-cli .buildcache",
     "prebuild": "yarn run lint && yarn run clean:dist",
     "build": "tsc -p tsconfig.json",
     "lint": "eslint . --ext .ts",
@@ -43,6 +43,7 @@
     "@types/node": "^16.11.62",
     "@typescript-eslint/eslint-plugin": "^5.38.1",
     "@typescript-eslint/parser": "^5.38.1",
+    "del-cli": "^5.0.0",
     "eslint": "^8.24.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-jest": "^27.0.4",
