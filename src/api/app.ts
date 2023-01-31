@@ -7,19 +7,26 @@ import queueCurrencyConversion from '../conversion/queue';
 const app = fastify({ logger: true });
 export default app;
 
+const toUppercase = (value: string): string => value.toUpperCase();
+
 const schemaCurrencyConversionBody = z.object({
   amount: z.number(),
-  baseCurrency: z.string(),
-  targetCurrency: z.string(),
+  baseCurrency: z.string().transform(toUppercase),
+  targetCurrency: z.string().transform(toUppercase),
   email: z.string().email(),
 });
 
 app.post(`/conversion`, async (request, reply) => {
   // validate request body
-  const { amount, baseCurrency, targetCurrency, email } = schemaCurrencyConversionBody.parse(request.body);
+  const body = schemaCurrencyConversionBody.safeParse(request.body);
+  if (!body.success) {
+    return reply.code(400).send({ ok: false, issues: body.error.issues });
+  }
+
+  const { amount, baseCurrency, targetCurrency, email } = body.data;
 
   // add currency conversion to queue
-  queueCurrencyConversion.sendMessage({
+  await queueCurrencyConversion.sendMessage({
     amount,
     baseCurrency,
     targetCurrency,
