@@ -3,7 +3,7 @@ import { parseEnv } from 'znv';
 
 const env = parseEnv(process.env, {
   NODE_ENV: z.enum([`development`, `production`, `test`]).default(`development`),
-  PORT: z.number({ coerce: true }).default(3000),
+  PORT: z.number({ coerce: true }).default(8000),
 
   MAIL_SENDER: z.string().default(`no-reply@home.local`),
 

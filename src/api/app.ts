@@ -38,9 +38,10 @@ app.post(`/conversion`, async (request, reply) => {
 
 export const start = async (): Promise<void> => {
   try {
-    await app.listen({ port: env.PORT });
-
-    app.log.info(`server listening on ${app.server.address()}`);
+    await app.listen({
+      host: `0.0.0.0`,
+      port: env.PORT,
+    });
   } catch (err) {
     app.log.error(err);
     process.exit(1);
