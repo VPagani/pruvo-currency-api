@@ -1,10 +1,10 @@
 import { onShutdown } from 'node-graceful-shutdown';
 
-import queueSendMail from './queue';
+import { start, stop } from './app';
 
-queueSendMail.start();
+start();
 
 onShutdown(async () => {
-  await queueSendMail.stop();
+  await stop();
   process.exit(0);
 });

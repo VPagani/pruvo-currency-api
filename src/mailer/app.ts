@@ -4,7 +4,7 @@ import queueSendMail from './queue';
  * Dummy async function to simulate sending an email
  */
 const sendMail = async (from: string, to: string, subject: string, text: string): Promise<void> => {
-  console.log(`Send mail to ${to} from ${from} with subject ${subject} and text ${text}`);
+  console.log(`Send mail to "${to}" from "${from}" with subject "${subject}" and text "${text}"`);
 
   await new Promise((resolve) => setTimeout(resolve, 1000));
 };
@@ -15,3 +15,11 @@ const sendMail = async (from: string, to: string, subject: string, text: string)
 queueSendMail.onMessage(async (data) => {
   await sendMail(data.from, data.to, data.subject, data.text);
 });
+
+export const start = async (): Promise<void> => {
+  await queueSendMail.start();
+};
+
+export const stop = async (): Promise<void> => {
+  await queueSendMail.stop();
+};

@@ -2,7 +2,7 @@ import * as z from 'zod';
 import { createQueue } from '../sqs';
 
 const queueSendMail = createQueue(
-  `send-mail`,
+  `mailer`,
   z.object({
     from: z.string().email(),
     to: z.string().email(),
