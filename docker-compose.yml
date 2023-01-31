@@ -1,18 +1,54 @@
-version: '3.7'
+version: '3.8'
 services:
   api:
-    image: 'app:latest'
+    image: 'pruvo-currency-api:latest'
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - '8000:8000'
-    command: node api/index.js
+    command: wait sqs:9324 -- node api/index.js
+    env_file:
+      - .env
+    environment:
+      - AWS_ENDPOINT=http://sqs:9324
+    depends_on:
+      - sqs
+    restart: unless-stopped
 
   conversion:
-    image: 'app:latest'
-    command: node conversion/index.js
+    image: 'pruvo-currency-conversion:latest'
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: wait sqs:9324 -- node conversion/index.js
+    env_file:
+      - .env
+    environment:
+      - AWS_ENDPOINT=http://sqs:9324
+    depends_on:
+      - api
+      - sqs
+    restart: unless-stopped
 
   mailer:
-    image: 'app:latest'
-    command: node mailer/index.js
+    image: 'pruvo-currency-mailer:latest'
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: wait sqs:9324 -- node mailer/index.js
+    env_file:
+      - .env
+    environment:
+      - AWS_ENDPOINT=http://sqs:9324
+    depends_on:
+      - api
+      - sqs
+    restart: unless-stopped
+
+  sqs:
+    image: 'roribio16/alpine-sqs:latest'
+    ports:
+      - '9324:9324'
+      - '9325:9325'
+    restart: unless-stopped
