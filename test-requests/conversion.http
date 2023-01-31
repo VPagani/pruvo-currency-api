@@ -1,0 +1,9 @@
+POST http://localhost:8000/conversion
+content-type: application/json
+
+{
+  "amount": 1000,
+  "baseCurrency": "usd",
+  "targetCurrency": "BRL",
+  "email": "myself@home.local"
+}
